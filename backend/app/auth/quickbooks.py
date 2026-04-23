@@ -7,8 +7,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class QuickBooksSettings(BaseSettings):
     qb_client_id: str = ""
     qb_client_secret: str = ""
-    qb_redirect_uri: str = "http://localhost:8000/qb/callback"
+    qb_redirect_uri: str = "http://localhost:8000/api/qb/callback"
     qb_environment: str = "sandbox"
+    frontend_url: str = "http://localhost:3000"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

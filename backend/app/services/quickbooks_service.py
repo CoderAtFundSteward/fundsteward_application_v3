@@ -400,3 +400,10 @@ def sync_and_cache_transactions(member_id: str) -> None:
     get_supabase_client().table("quickbooks_connections").update(
         {"last_synced_at": datetime.now(UTC).isoformat()}
     ).eq("id", connection["id"]).execute()
+
+
+def disconnect_quickbooks(member_id: str) -> None:
+    connection = _get_active_connection(member_id)
+    get_supabase_client().table("quickbooks_connections").update(
+        {"is_active": False}
+    ).eq("id", connection["id"]).execute()
