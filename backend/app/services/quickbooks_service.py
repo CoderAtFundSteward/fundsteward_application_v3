@@ -9,11 +9,13 @@ from dotenv import load_dotenv
 from app.database.supabase import get_supabase_client
 
 try:
+    from intuitlib.client import AuthClient
     from quickbooks import QuickBooks
     from quickbooks.objects.bill import Bill
     from quickbooks.objects.invoice import Invoice
     from quickbooks.objects.payment import Payment
 except ImportError:  # pragma: no cover - runtime dependency guard
+    AuthClient = Any  # type: ignore[assignment]
     QuickBooks = Any  # type: ignore[assignment]
     Bill = Any  # type: ignore[assignment]
     Invoice = Any  # type: ignore[assignment]
@@ -191,16 +193,24 @@ def get_qb_client(member_id: str) -> QuickBooks:
             "QuickBooks credentials are missing on the server. Please configure QB_CLIENT_ID and QB_CLIENT_SECRET."
         )
 
-    if QuickBooks is Any:
+    if QuickBooks is Any or AuthClient is Any:
         raise RuntimeError("python-quickbooks is not installed. Add it to backend dependencies.")
 
-    return QuickBooks(
-        company_id=connection.get("realm_id"),
-        access_token=connection.get("access_token"),
-        refresh_token=connection.get("refresh_token"),
+    auth_client = AuthClient(
         client_id=client_id,
         client_secret=client_secret,
-        sandbox=_get_qb_env() != "production",
+        environment="production" if _get_qb_env() == "production" else "sandbox",
+        redirect_uri=os.getenv("QB_REDIRECT_URI", ""),
+    )
+    auth_client.access_token = connection.get("access_token")
+    auth_client.refresh_token = connection.get("refresh_token")
+    auth_client.realm_id = connection.get("realm_id")
+
+    return QuickBooks(
+        auth_client=auth_client,
+        company_id=connection.get("realm_id"),
+        refresh_token=connection.get("refresh_token"),
+        minorversion=65,
     )
 
 
