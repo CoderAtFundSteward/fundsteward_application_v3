@@ -47,10 +47,19 @@ export default function SignupPage() {
       return;
     }
 
+    // Supabase can return an existing user with empty identities instead of an explicit error.
+    // Treat that response as "account already exists" and direct the user to login.
+    if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      setError("An account with this email already exists. Please log in instead.");
+      setLoading(false);
+      return;
+    }
+
     if (!data.session) {
-      // If email confirmation is required, route user to dashboard where middleware can handle next steps.
-      router.push("/dashboard");
-      router.refresh();
+      setError(
+        "Signup successful. Please check your email to confirm your account, then log in."
+      );
+      setLoading(false);
       return;
     }
 
